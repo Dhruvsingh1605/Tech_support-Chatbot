@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gfuture Tech Support Chatbot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+    }
+    
+    .wrapper {
+      width: 500px; /* Increased width from 370px to 500px */
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .wrapper .title {
+      background: #007bff;
+      color: #fff;
+      line-height: 2.5;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    /* Increased chatbot box height to 600px */
+    .wrapper .box {
+      border: 1px solid #efefef;
+      padding: 10px 15px;
+      min-height: 600px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    .wrapper .box .item {
+      display: flex;
+      margin: 10px 0;
+    }
+    
+    .wrapper .box .item .icon {
+      background: #007bff;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      line-height: 40px;
+      border-radius: 50%;
+    }
+    
+    .wrapper .box .item .msg {
+      background: #007bff;
+      color: #fff;
+      border-radius: 10px;
+      margin-left: 10px;
+      max-width: 70%;
+      padding: 10px;
+    }
+    
+    .wrapper .box .item.right {
+      flex-direction: row-reverse;
+    }
+    
+    .wrapper .box .item.right .msg {
+      background: #efefef;
+      color: #333;
+      margin-right: 10px;
+    }
+    
+    .wrapper .typing-area {
+      width: 100%;
+      background: #efefef;
+      padding: 10px;
+    }
+    
+    .wrapper .typing-area .input-field {
+      width: 100%;
+      position: relative;
+    }
+    
+    .wrapper .typing-area .input-field input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      outline: none;
+      padding-right: 70px;
+      transition: 0.3s all ease;
+    }
+    
+    .wrapper .typing-area .input-field input:focus {
+      border-color: #007bff;
+    }
+    
+    .wrapper .typing-area .input-field button {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      background: transparent;
+      border: 1px solid #007bff;
+      padding: 5px 10px;
+      border-radius: 3px;
+      color: #007bff;
+      outline: none;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.3s all ease;
+    }
+    
+    .wrapper .typing-area .input-field button:hover {
+      background: #007bff;
+      color: #fff;
+    }
+    
+    .wrapper .typing-area .input-field input:valid ~ button {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="title">Tech Support AI</div>
+    <div class="box" id="chat-box">
+      <!-- Initial bot greeting -->
+      <div class="item">
+        <div class="icon">
+          <i class="fa fa-user"></i>
+        </div>
+        <div class="msg">
+          <p>Hello, how can I assist you today?</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="typing-area">
+      <div class="input-field">
+        <input type="text" id="user-input" placeholder="Type your message" required>
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Event listener for the Send button
+    document.getElementById('send-btn').addEventListener('click', function() {
+      var inputField = document.getElementById('user-input');
+      var userText = inputField.value.trim();
+      if (userText === "") {
+        return;
+      }
+      
+      // Append user's message to the chat box (aligned to the right)
+      var chatBox = document.getElementById('chat-box');
+      var userItem = document.createElement('div');
+      userItem.classList.add('item', 'right');
+      userItem.innerHTML = '<div class="msg"><p>' + userText + '</p></div>';
+      chatBox.appendChild(userItem);
+      
+      // Clear input field and scroll to the bottom
+      inputField.value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
+      
+      // Send the message to the Flask backend using Fetch API
+      var formData = new FormData();
+      formData.append('msg', userText);
+      
+      fetch('/chat', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Append the bot's response to the chat box (aligned to the left)
+        var botItem = document.createElement('div');
+        botItem.classList.add('item');
+        botItem.innerHTML = '<div class="icon"><i class="fa fa-user"></i></div>' +
+                            '<div class="msg"><p>' + data.response + '</p></div>';
+        chatBox.appendChild(botItem);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
+    
+    // Allow the Enter key to send the message
+    document.getElementById('user-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('send-btn').click();
+      }
+    });
+  </script>
+</body>
+</html>
